@@ -13,9 +13,6 @@ function doPost(e) {
 function handleCors(e) {
   const response = ContentService.createTextOutput();
   response.setMimeType(ContentService.MimeType.JSON);
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   try {
     let params = {};
@@ -98,8 +95,7 @@ function getPelanggan() {
       alamat: data[i][2],
       hp: data[i][3],
       kategori: data[i][4],
-      status: data[i][5],
-      tanggal_daftar: data[i][6]
+      status: data[i][5]
     });
   }
   return { status: 'success', data: pelanggan };
@@ -119,20 +115,20 @@ function savePelanggan(params) {
     let found = false;
     for (let i = 1; i < ids.length; i++) {
       if (ids[i][0] == data.id) {
-        sheet.getRange(i+1, 1, 1, 7).setValues([[
-          data.id, data.nama, data.alamat, data.hp, data.kategori, data.status, data.tanggal_daftar || new Date().toISOString().split('T')[0]
+        sheet.getRange(i+1, 1, 1, 6).setValues([[
+          data.id, data.nama, data.alamat, data.hp, data.kategori, data.status
         ]]);
         found = true;
         break;
       }
     }
     if (!found) {
-      sheet.appendRow([data.id, data.nama, data.alamat, data.hp, data.kategori, data.status, data.tanggal_daftar || new Date().toISOString().split('T')[0]]);
+      sheet.appendRow([data.id, data.nama, data.alamat, data.hp, data.kategori, data.status]);
     }
   } else {
     // Insert new
     data.id = Utilities.getUuid();
-    sheet.appendRow([data.id, data.nama, data.alamat, data.hp, data.kategori, data.status, new Date().toISOString().split('T')[0]]);
+    sheet.appendRow([data.id, data.nama, data.alamat, data.hp, data.kategori, data.status]);
   }
   
   logActivity('save_pelanggan', `Menyimpan pelanggan: ${data.nama}`);
