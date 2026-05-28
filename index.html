@@ -635,7 +635,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
                     if (serverResult && serverResult.data) {
                         offlineData.pelanggan.push(serverResult.data);
                     } else {
-                        pelanggan.id = Date.now().toString();
+                        pelanggan.id = generateId('PLG-');
                         offlineData.pelanggan.push(pelanggan);
                     }
                 }
@@ -733,7 +733,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
                         offlineData.tarif[index] = serverResult?.data || tarif;
                     }
                 } else {
-                    offlineData.tarif.push(serverResult?.data || tarif);
+                    offlineData.tarif.push(serverResult?.data || { ...tarif, id: generateId('TRF-') });
                 }
                 
                 saveOfflineData();
@@ -886,8 +886,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
             } else {
                 savedPembayaran = {
                     ...pembayaran,
-                    id: Date.now().toString(),
-                    nomor_kwitansi: `KW-${Date.now()}`
+                    id: generateId('TRX-'),
+                    nomor_kwitansi: generateId('KW-')
                 };
             }
             
@@ -1139,6 +1139,15 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
         
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        
+        function generateId(prefix) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = prefix;
+            for (let i = 0; i < 5; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
         }
         
         function initSampleData() {

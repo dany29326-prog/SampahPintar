@@ -127,7 +127,7 @@ function savePelanggan(params) {
     }
   } else {
     // Insert new
-    data.id = Utilities.getUuid();
+    data.id = generateId('PLG-');
     sheet.appendRow([data.id, data.nama, data.alamat, data.hp, data.kategori, data.status]);
   }
   
@@ -196,7 +196,7 @@ function saveTarif(params) {
       sheet.appendRow([data.id, data.kategori, data.periode, data.nominal, data.denda]);
     }
   } else {
-    data.id = Utilities.getUuid();
+    data.id = generateId('TRF-');
     sheet.appendRow([data.id, data.kategori, data.periode, data.nominal, data.denda]);
   }
   logActivity('save_tarif', `Menyimpan tarif: ${data.kategori} - ${data.periode}`);
@@ -258,7 +258,6 @@ function savePembayaran(params) {
   if (!data.nomor_kwitansi) {
     data.nomor_kwitansi = `KW-${new Date().getTime()}`;
   }
-  
   const ids = sheet.getRange('A:A').getValues();
   let found = false;
   for (let i = 1; i < ids.length; i++) {
@@ -272,6 +271,8 @@ function savePembayaran(params) {
   }
   
   if (!found) {
+    if (!data.id || data.id === 'null' || data.id === '') data.id = generateId('TRX-');
+    if (!data.nomor_kwitansi) data.nomor_kwitansi = generateId('KW-');
     sheet.appendRow([
       data.id, 
       data.pelanggan_id, 
@@ -326,6 +327,15 @@ function logActivity(aksi, detail) {
     }
     sheet.appendRow([new Date().toISOString(), aksi, detail, Session.getActiveUser().getEmail(), 'web']);
   } catch(e) {}
+}
+
+function generateId(prefix) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = prefix;
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 // ========== CREATE SHEETS (JIKA BELUM ADA) ==========
