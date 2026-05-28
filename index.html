@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SampahPintar - Manajemen Pembayaran Sampah</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .panel.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #276749 100%);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-buttons button {
+            padding: 5px 10px;
+            font-size: 0.85em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .sync-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #48bb78 0%, #276749 100%);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .sync-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .sync-status {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .struk {
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+
+        .struk h3 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .struk hr {
+            margin: 10px 0;
+            border: 1px dashed #000;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .tab-btn { padding: 8px 16px; font-size: 0.85em; }
+            th, td { font-size: 0.85em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 SampahPintar</h1>
+            <p>Sistem Manajemen Pembayaran Iuran Sampah</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showPanel('pelanggan')">👥 Pelanggan</button>
+            <button class="tab-btn" onclick="showPanel('tarif')">💰 Tarif</button>
+            <button class="tab-btn" onclick="showPanel('transaksi')">💳 Transaksi</button>
+            <button class="tab-btn" onclick="showPanel('laporan')">📊 Laporan</button>
+            <button class="tab-btn" onclick="showPanel('tunggakan')">⚠️ Tunggakan</button>
+        </div>
+
+        <div id="pelanggan" class="panel active">
+            <h2>Manajemen Pelanggan</h2>
+            <form id="formPelanggan" onsubmit="savePelanggan(event)">
+                <input type="hidden" id="pelanggan_id">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="nama" required>
+                </div>
+                <div class="form-group">
+                    <label>Alamat</label>
+                    <textarea id="alamat" rows="2" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Nomor HP</label>
+                    <input type="tel" id="hp" required>
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="kategori" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="RT">RT (Rumah Tangga)</option>
+                        <option value="Toko">Toko</option>
+                        <option value="Kantor">Kantor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="status">
+                        <option value="AKTIF">AKTIF</option>
+                        <option value="NONAKTIF">NONAKTIF</option>
+                    </select>
+                </div>
+                <button type="submit">Simpan Pelanggan</button>
+                <button type="button" class="btn-danger" onclick="resetFormPelanggan()">Batal</button>
+            </form>
+            <div class="table-container">
+                <table id="tablePelanggan">
+                    <thead><tr><th>Nama</th><th>Alamat</th><th>HP</th><th>Kategori</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tarif" class="panel">
+            <h2>Setting Tarif</h2>
+            <form id="formTarif" onsubmit="saveTarif(event)">
+                <input type="hidden" id="tarif_id">
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <select id="tarif_kategori" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="RT">RT (Rumah Tangga)</option>
+                        <option value="Toko">Toko</option>
+                        <option value="Kantor">Kantor</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Periode</label>
+                    <select id="periode" required>
+                        <option value="mingguan">Mingguan</option>
+                        <option value="bulanan">Bulanan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nominal (Rp)</label>
+                    <input type="number" id="nominal" required>
+                </div>
+                <div class="form-group">
+                    <label>Denda (Rp)</label>
+                    <input type="number" id="denda" value="0">
+                </div>
+                <button type="submit">Simpan Tarif</button>
+                <button type="button" class="btn-danger" onclick="resetFormTarif()">Batal</button>
+            </form>
+            <div class="table-container">
+                <table id="tableTarif">
+                    <thead><tr><th>Kategori</th><th>Periode</th><th>Nominal</th><th>Denda</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="transaksi" class="panel">
+            <h2>Transaksi Pembayaran</h2>
+            <div class="form-group">
+                <label>Pilih Pelanggan</label>
+                <select id="pilihPelanggan" onchange="hitungTagihan()">
+                    <option value="">Pilih Pelanggan</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Periode Pembayaran</label>
+                <select id="periodeBayar" onchange="hitungTagihan()">
+                    <option value="mingguan">Mingguan</option>
+                    <option value="bulanan">Bulanan</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Jumlah Periode</label>
+                <input type="number" id="jumlahPeriode" value="1" min="1" onchange="hitungTagihan()">
+            </div>
+            <div class="form-group">
+                <label>Tanggal Bayar</label>
+                <input type="date" id="tanggalBayar">
+            </div>
+            <div id="detailTagihan" style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
+            <button class="btn-success" onclick="prosesPembayaran()">Proses Pembayaran</button>
+            <div class="table-container">
+                <h3>Riwayat Pembayaran</h3>
+                <table id="tablePembayaran">
+                    <thead><tr><th>Tanggal</th><th>Pelanggan</th><th>Periode</th><th>Total</th><th>Kwitansi</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="laporan" class="panel">
+            <h2>Laporan Pemasukan</h2>
+            <div class="stats">
+                <div class="stat-card"><h3>Pemasukan Hari Ini</h3><div class="value" id="pemasukanHari">Rp 0</div></div>
+                <div class="stat-card"><h3>Pemasukan Minggu Ini</h3><div class="value" id="pemasukanMinggu">Rp 0</div></div>
+                <div class="stat-card"><h3>Pemasukan Bulan Ini</h3><div class="value" id="pemasukanBulan">Rp 0</div></div>
+                <div class="stat-card"><h3>Total Pemasukan</h3><div class="value" id="pemasukanTotal">Rp 0</div></div>
+            </div>
+            <div class="table-container">
+                <h3>Detail Transaksi</h3>
+                <table id="tableLaporan">
+                    <thead><tr><th>Tanggal</th><th>Pelanggan</th><th>Periode</th><th>Nominal</th><th>Denda</th><th>Total</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tunggakan" class="panel">
+            <h2>Pelanggan dengan Tunggakan</h2>
+            <div class="table-container">
+                <table id="tableTunggakan">
+                    <thead><tr><th>Nama</th><th>Alamat</th><th>HP</th><th>Kategori</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalStruk" class="modal">
+        <div class="modal-content">
+            <div id="strukContent"></div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="printStruk()">🖨️ Print</button>
+                <button onclick="sendWA()">📱 Kirim WA</button>
+                <button onclick="closeModalStruk()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sync-btn" onclick="syncData()">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+        </svg>
+    </div>
+    <div class="sync-status" id="syncStatus">Online</div>
+
+    <script>
+        // ========== KONFIGURASI ==========
+// GANTI DENGAN URL WEB APP ANDA!
+const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5YahWnHN6MGa5w0rIvVRPfRD6iADnG0QkPt53k_33ScTJL4T/exec';
+        
+        let offlineData = {
+            pelanggan: [],
+            tarif: [],
+            pembayaran: []
+        };
+        
+        // ========== FUNGSI UTAMA ==========
+        async function callAPI(action, data = null) {
+            if (!API_URL || API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                console.warn('API URL belum diatur. Data hanya disimpan lokal.');
+                return { status: 'offline', message: 'API URL belum dikonfigurasi' };
+            }
+            
+            try {
+                const url = new URL(API_URL);
+                const payload = { action: action };
+                if (data) {
+                    payload.data = data;
+                }
+                
+                const response = await fetch(url.toString(), {
+                    method: 'POST',
+                    mode: 'cors',
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('API Error:', error);
+                return { status: 'error', message: error.message };
+            }
+        }
+        
+        async function syncToServer(type, data) {
+            if (!API_URL || API_URL.includes('YOUR_DEPLOYMENT_ID')) return false;
+            
+            try {
+                let action = '';
+                if (type === 'pelanggan') action = 'savePelanggan';
+                else if (type === 'tarif') action = 'saveTarif';
+                else if (type === 'pembayaran') action = 'savePembayaran';
+                else return false;
+                
+                const result = await callAPI(action, data);
+                if (result.status === 'success') {
+                    updateSyncStatus(`✅ ${type} tersimpan ke server`);
+                    return result;
+                }
+                return false;
+            } catch (error) {
+                updateSyncStatus(`⚠️ Gagal sync ${type}`);
+                return false;
+            }
+        }
+        
+        async function loadFromServer() {
+            if (!API_URL || API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                updateSyncStatus('⚠️ API belum dikonfigurasi');
+                return false;
+            }
+            
+            updateSyncStatus('📡 Memuat data dari server...');
+            
+            try {
+                // Load pelanggan
+                const pelangganResult = await callAPI('getPelanggan');
+                if (pelangganResult.status === 'success' && pelangganResult.data) {
+                    offlineData.pelanggan = pelangganResult.data;
+                }
+                
+                // Load tarif
+                const tarifResult = await callAPI('getTarif');
+                if (tarifResult.status === 'success' && tarifResult.data) {
+                    offlineData.tarif = tarifResult.data;
+                }
+                
+                // Load pembayaran
+                const pembayaranResult = await callAPI('getPembayaran');
+                if (pembayaranResult.status === 'success' && pembayaranResult.data) {
+                    offlineData.pembayaran = pembayaranResult.data;
+                }
+                
+                saveOfflineData();
+                renderAllTables();
+                updateSyncStatus('✅ Data dimuat dari server');
+                return true;
+            } catch (error) {
+                updateSyncStatus('⚠️ Gagal memuat data');
+                return false;
+            }
+        }
+        
+        // Save to localStorage
+        function saveOfflineData() {
+            localStorage.setItem('sampahpintar_data', JSON.stringify(offlineData));
+        }
+        
+        function loadOfflineData() {
+            const stored = localStorage.getItem('sampahpintar_data');
+            if (stored) {
+                offlineData = JSON.parse(stored);
+                renderAllTables();
+            } else {
+                initSampleData();
+            }
+        }
+        
+        function updateSyncStatus(msg) {
+            const statusDiv = document.getElementById('syncStatus');
+            if (statusDiv) {
+                statusDiv.textContent = msg;
+                setTimeout(() => {
+                    if (statusDiv.textContent === msg) {
+                        statusDiv.textContent = '✅ Online';
+                    }
+                }, 3000);
+            }
+        }
+        
+        // ========== PELANGGAN CRUD ==========
+        async function savePelanggan(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('pelanggan_id').value;
+            const pelanggan = {
+                id: id || null,
+                nama: document.getElementById('nama').value,
+                alamat: document.getElementById('alamat').value,
+                hp: document.getElementById('hp').value,
+                kategori: document.getElementById('kategori').value,
+                status: document.getElementById('status').value,
+                tanggal_daftar: new Date().toISOString().split('T')[0]
+            };
+            
+            // Simpan ke server dulu
+            const serverResult = await syncToServer('pelanggan', pelanggan);
+            
+            if (serverResult || !API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                // Update lokal
+                if (id) {
+                    const index = offlineData.pelanggan.findIndex(p => p.id === id);
+                    if (index !== -1) {
+                        if (serverResult && serverResult.data) {
+                            offlineData.pelanggan[index] = serverResult.data;
+                        } else {
+                            offlineData.pelanggan[index] = pelanggan;
+                        }
+                    }
+                } else {
+                    if (serverResult && serverResult.data) {
+                        offlineData.pelanggan.push(serverResult.data);
+                    } else {
+                        pelanggan.id = Date.now().toString();
+                        offlineData.pelanggan.push(pelanggan);
+                    }
+                }
+                
+                saveOfflineData();
+                renderPelanggan();
+                resetFormPelanggan();
+                updatePelangganSelect();
+                updateSyncStatus('✅ Pelanggan tersimpan');
+            } else {
+                alert('Gagal menyimpan ke server. Periksa koneksi dan konfigurasi API.');
+            }
+        }
+        
+        function editPelanggan(id) {
+            const pelanggan = offlineData.pelanggan.find(p => p.id === id);
+            if (pelanggan) {
+                document.getElementById('pelanggan_id').value = pelanggan.id;
+                document.getElementById('nama').value = pelanggan.nama;
+                document.getElementById('alamat').value = pelanggan.alamat;
+                document.getElementById('hp').value = pelanggan.hp;
+                document.getElementById('kategori').value = pelanggan.kategori;
+                document.getElementById('status').value = pelanggan.status;
+            }
+        }
+        
+        async function deletePelanggan(id) {
+            if (confirm('Hapus pelanggan ini?')) {
+                // Hapus dari server
+                if (API_URL && !API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                    await callAPI('deletePelanggan', { id: id });
+                }
+                
+                offlineData.pelanggan = offlineData.pelanggan.filter(p => p.id !== id);
+                saveOfflineData();
+                renderPelanggan();
+                updatePelangganSelect();
+                renderTunggakan();
+                updateSyncStatus('✅ Pelanggan dihapus');
+            }
+        }
+        
+        function resetFormPelanggan() {
+            document.getElementById('pelanggan_id').value = '';
+            document.getElementById('nama').value = '';
+            document.getElementById('alamat').value = '';
+            document.getElementById('hp').value = '';
+            document.getElementById('kategori').value = '';
+            document.getElementById('status').value = 'AKTIF';
+        }
+        
+        function renderPelanggan() {
+            const tbody = document.querySelector('#tablePelanggan tbody');
+            if (!tbody) return;
+            
+            if (offlineData.pelanggan.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Belum ada data pelanggan</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = offlineData.pelanggan.map(p => `
+                <tr>
+                    <td>${p.nama}</td>
+                    <td>${p.alamat}</td>
+                    <td>${p.hp}</td>
+                    <td>${p.kategori}</td>
+                    <td><span style="color: ${p.status === 'AKTIF' ? 'green' : 'red'}">${p.status}</span></td>
+                    <td class="action-buttons">
+                        <button onclick="editPelanggan('${p.id}')">✏️</button>
+                        <button class="btn-danger" onclick="deletePelanggan('${p.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // ========== TARIF CRUD ==========
+        async function saveTarif(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('tarif_id').value;
+            const tarif = {
+                id: id || null,
+                kategori: document.getElementById('tarif_kategori').value,
+                periode: document.getElementById('periode').value,
+                nominal: parseInt(document.getElementById('nominal').value),
+                denda: parseInt(document.getElementById('denda').value) || 0
+            };
+            
+            const serverResult = await syncToServer('tarif', tarif);
+            
+            if (serverResult || !API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                if (id) {
+                    const index = offlineData.tarif.findIndex(t => t.id === id);
+                    if (index !== -1) {
+                        offlineData.tarif[index] = serverResult?.data || tarif;
+                    }
+                } else {
+                    offlineData.tarif.push(serverResult?.data || tarif);
+                }
+                
+                saveOfflineData();
+                renderTarif();
+                resetFormTarif();
+                updateSyncStatus('✅ Tarif tersimpan');
+            } else {
+                alert('Gagal menyimpan tarif ke server');
+            }
+        }
+        
+        function editTarif(id) {
+            const tarif = offlineData.tarif.find(t => t.id === id);
+            if (tarif) {
+                document.getElementById('tarif_id').value = tarif.id;
+                document.getElementById('tarif_kategori').value = tarif.kategori;
+                document.getElementById('periode').value = tarif.periode;
+                document.getElementById('nominal').value = tarif.nominal;
+                document.getElementById('denda').value = tarif.denda;
+            }
+        }
+        
+        async function deleteTarif(id) {
+            if (confirm('Hapus tarif ini?')) {
+                if (API_URL && !API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                    await callAPI('deleteTarif', { id: id });
+                }
+                
+                offlineData.tarif = offlineData.tarif.filter(t => t.id !== id);
+                saveOfflineData();
+                renderTarif();
+                updateSyncStatus('✅ Tarif dihapus');
+            }
+        }
+        
+        function resetFormTarif() {
+            document.getElementById('tarif_id').value = '';
+            document.getElementById('tarif_kategori').value = '';
+            document.getElementById('periode').value = 'mingguan';
+            document.getElementById('nominal').value = '';
+            document.getElementById('denda').value = '0';
+        }
+        
+        function renderTarif() {
+            const tbody = document.querySelector('#tableTarif tbody');
+            if (!tbody) return;
+            
+            if (offlineData.tarif.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Belum ada data tarif</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = offlineData.tarif.map(t => `
+                <tr>
+                    <td>${t.kategori}</td>
+                    <td>${t.periode}</td>
+                    <td>Rp ${formatNumber(t.nominal)}</td>
+                    <td>Rp ${formatNumber(t.denda)}</td>
+                    <td class="action-buttons">
+                        <button onclick="editTarif('${t.id}')">✏️</button>
+                        <button class="btn-danger" onclick="deleteTarif('${t.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // ========== TRANSAKSI ==========
+        function updatePelangganSelect() {
+            const select = document.getElementById('pilihPelanggan');
+            if (!select) return;
+            
+            const activePelanggan = offlineData.pelanggan.filter(p => p.status === 'AKTIF');
+            select.innerHTML = '<option value="">Pilih Pelanggan</option>' + 
+                activePelanggan.map(p => `<option value="${p.id}">${p.nama} - ${p.kategori}</option>`).join('');
+        }
+        
+        function hitungTagihan() {
+            const pelangganId = document.getElementById('pilihPelanggan').value;
+            const detailDiv = document.getElementById('detailTagihan');
+            
+            if (!pelangganId || !detailDiv) return;
+            
+            const pelanggan = offlineData.pelanggan.find(p => p.id === pelangganId);
+            if (!pelanggan) return;
+            
+            const periodeType = document.getElementById('periodeBayar').value;
+            const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
+            
+            if (!tarif) {
+                detailDiv.innerHTML = '<p style="color:red">Tarif belum di-set untuk kategori ini</p>';
+                return;
+            }
+            
+            const jumlah = parseInt(document.getElementById('jumlahPeriode').value) || 1;
+            const nominal = tarif.nominal * jumlah;
+            const denda = tarif.denda * jumlah;
+            const total = nominal + denda;
+            
+            detailDiv.innerHTML = `
+                <strong>Detail Tagihan:</strong><br>
+                Kategori: ${pelanggan.kategori}<br>
+                Tarif per periode: Rp ${formatNumber(tarif.nominal)}<br>
+                Jumlah periode: ${jumlah}<br>
+                Subtotal: Rp ${formatNumber(nominal)}<br>
+                Denda: Rp ${formatNumber(denda)}<br>
+                <strong style="font-size: 1.2em;">Total: Rp ${formatNumber(total)}</strong>
+            `;
+        }
+        
+        async function prosesPembayaran() {
+            const pelangganId = document.getElementById('pilihPelanggan').value;
+            if (!pelangganId) {
+                alert('Pilih pelanggan terlebih dahulu');
+                return;
+            }
+            
+            const pelanggan = offlineData.pelanggan.find(p => p.id === pelangganId);
+            if (!pelanggan) return;
+            
+            const periodeType = document.getElementById('periodeBayar').value;
+            const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
+            
+            if (!tarif) {
+                alert('Tarif belum di-set');
+                return;
+            }
+            
+            const jumlah = parseInt(document.getElementById('jumlahPeriode').value) || 1;
+            const tanggalBayar = document.getElementById('tanggalBayar').value || new Date().toISOString().split('T')[0];
+            const nominal = tarif.nominal * jumlah;
+            const denda = tarif.denda * jumlah;
+            const total = nominal + denda;
+            
+            const pembayaran = {
+                pelanggan_id: pelangganId,
+                tanggal_bayar: tanggalBayar,
+                periode_bayar: `${periodeType} - ${jumlah} periode`,
+                nominal: nominal,
+                denda: denda,
+                total: total,
+                status: 'LUNAS'
+            };
+            
+            // Simpan ke server
+            const serverResult = await syncToServer('pembayaran', pembayaran);
+            
+            let savedPembayaran;
+            if (serverResult && serverResult.data) {
+                savedPembayaran = serverResult.data;
+            } else {
+                savedPembayaran = {
+                    ...pembayaran,
+                    id: Date.now().toString(),
+                    nomor_kwitansi: `KW-${Date.now()}`
+                };
+            }
+            
+            offlineData.pembayaran.push(savedPembayaran);
+            saveOfflineData();
+            
+            renderPembayaran();
+            renderLaporan();
+            renderTunggakan();
+            updateStats();
+            
+            showStruk(savedPembayaran, pelanggan, tarif, jumlah);
+            
+            document.getElementById('jumlahPeriode').value = '1';
+            document.getElementById('detailTagihan').innerHTML = '';
+            updateSyncStatus('✅ Pembayaran tersimpan');
+        }
+        
+        function renderPembayaran() {
+            const tbody = document.querySelector('#tablePembayaran tbody');
+            if (!tbody) return;
+            
+            if (offlineData.pembayaran.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Belum ada transaksi</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = offlineData.pembayaran.map(p => {
+                const pelanggan = offlineData.pelanggan.find(pel => pel.id === p.pelanggan_id);
+                return `
+                    <tr>
+                        <td>${p.tanggal_bayar}</td>
+                        <td>${pelanggan ? pelanggan.nama : '-'}</td>
+                        <td>${p.periode_bayar}</td>
+                        <td>Rp ${formatNumber(p.total)}</td>
+                        <td>${p.nomor_kwitansi || '-'}</td>
+                        <td><button onclick="cetakUlang('${p.id}')">🖨️ Cetak</button>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function cetakUlang(id) {
+            const pembayaran = offlineData.pembayaran.find(p => p.id === id);
+            if (pembayaran) {
+                const pelanggan = offlineData.pelanggan.find(p => p.id === pembayaran.pelanggan_id);
+                const periodeType = pembayaran.periode_bayar.split(' ')[0];
+                const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
+                showStruk(pembayaran, pelanggan, tarif, 1);
+            }
+        }
+        
+        // ========== LAPORAN ==========
+        function renderLaporan() {
+            const tbody = document.querySelector('#tableLaporan tbody');
+            if (!tbody) return;
+            
+            if (offlineData.pembayaran.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Belum ada transaksi</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = offlineData.pembayaran.map(p => {
+                const pelanggan = offlineData.pelanggan.find(pel => pel.id === p.pelanggan_id);
+                return `
+                    <tr>
+                        <td>${p.tanggal_bayar}</td>
+                        <td>${pelanggan ? pelanggan.nama : '-'}</td>
+                        <td>${p.periode_bayar}</td>
+                        <td>Rp ${formatNumber(p.nominal)}</td>
+                        <td>Rp ${formatNumber(p.denda)}</td>
+                        <td>Rp ${formatNumber(p.total)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        function updateStats() {
+            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            const weekStartStr = weekStart.toISOString().split('T')[0];
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            
+            let totalHari = 0, totalMinggu = 0, totalBulan = 0, totalSemua = 0;
+            
+            offlineData.pembayaran.forEach(p => {
+                totalSemua += p.total;
+                if (p.tanggal_bayar === today) totalHari += p.total;
+                if (p.tanggal_bayar >= weekStartStr) totalMinggu += p.total;
+                if (p.tanggal_bayar >= monthStart) totalBulan += p.total;
+            });
+            
+            const pemasukanHari = document.getElementById('pemasukanHari');
+            const pemasukanMinggu = document.getElementById('pemasukanMinggu');
+            const pemasukanBulan = document.getElementById('pemasukanBulan');
+            const pemasukanTotal = document.getElementById('pemasukanTotal');
+            
+            if (pemasukanHari) pemasukanHari.innerHTML = `Rp ${formatNumber(totalHari)}`;
+            if (pemasukanMinggu) pemasukanMinggu.innerHTML = `Rp ${formatNumber(totalMinggu)}`;
+            if (pemasukanBulan) pemasukanBulan.innerHTML = `Rp ${formatNumber(totalBulan)}`;
+            if (pemasukanTotal) pemasukanTotal.innerHTML = `Rp ${formatNumber(totalSemua)}`;
+        }
+        
+        // ========== TUNGGAKAN ==========
+        function renderTunggakan() {
+            const tbody = document.querySelector('#tableTunggakan tbody');
+            if (!tbody) return;
+            
+            const activePelanggan = offlineData.pelanggan.filter(p => p.status === 'AKTIF');
+            const last30Days = new Date();
+            last30Days.setDate(last30Days.getDate() - 30);
+            
+            const tunggakan = activePelanggan.filter(pelanggan => {
+                const lastPayment = offlineData.pembayaran
+                    .filter(p => p.pelanggan_id === pelanggan.id)
+                    .sort((a,b) => new Date(b.tanggal_bayar) - new Date(a.tanggal_bayar))[0];
+                
+                return !lastPayment || new Date(lastPayment.tanggal_bayar) < last30Days;
+            });
+            
+            if (tunggakan.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Tidak ada tunggakan</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = tunggakan.map(p => `
+                <tr>
+                    <td>${p.nama}</td>
+                    <td>${p.alamat}</td>
+                    <td>${p.hp}</td>
+                    <td>${p.kategori}</td>
+                    <td><span style="color: orange">TUNGGAK</span></td>
+                    <td><button onclick="showPanel('transaksi'); setTimeout(() => { document.getElementById('pilihPelanggan').value = '${p.id}'; hitungTagihan(); }, 100);">Bayar</button></td>
+                </tr>
+            `).join('');
+        }
+        
+        // ========== STRUK ==========
+        let currentStruk = null;
+        
+        function showStruk(pembayaran, pelanggan, tarif, jumlah) {
+            currentStruk = { pembayaran, pelanggan, tarif, jumlah };
+            const strukHtml = `
+                <div class="struk">
+                    <h3>KWITANSI PEMBAYARAN</h3>
+                    <p style="text-align: center">SISTEM SAMPAHPINTAR</p>
+                    <hr>
+                    <p><strong>No. Kwitansi:</strong> ${pembayaran.nomor_kwitansi}</p>
+                    <p><strong>Tanggal:</strong> ${pembayaran.tanggal_bayar}</p>
+                    <hr>
+                    <p><strong>Pelanggan:</strong> ${pelanggan.nama}</p>
+                    <p><strong>Alamat:</strong> ${pelanggan.alamat}</p>
+                    <p><strong>Kategori:</strong> ${pelanggan.kategori}</p>
+                    <hr>
+                    <p><strong>Pembayaran:</strong> ${pembayaran.periode_bayar}</p>
+                    <p><strong>Subtotal:</strong> Rp ${formatNumber(pembayaran.nominal)}</p>
+                    <p><strong>Denda:</strong> Rp ${formatNumber(pembayaran.denda)}</p>
+                    <hr>
+                    <h3 style="text-align: center">TOTAL: Rp ${formatNumber(pembayaran.total)}</h3>
+                    <hr>
+                    <p style="text-align: center">Terima kasih atas pembayarannya</p>
+                    <p style="text-align: center">*** LUNAS ***</p>
+                </div>
+            `;
+            const strukContent = document.getElementById('strukContent');
+            if (strukContent) strukContent.innerHTML = strukHtml;
+            document.getElementById('modalStruk').classList.add('active');
+        }
+        
+        function printStruk() {
+            const printContent = document.getElementById('strukContent');
+            if (!printContent) return;
+            const originalContent = document.body.innerHTML;
+            document.body.innerHTML = printContent.innerHTML;
+            window.print();
+            document.body.innerHTML = originalContent;
+            location.reload();
+        }
+        
+        function sendWA() {
+            if (currentStruk) {
+                const msg = `*KWITANSI PEMBAYARAN SAMPAHPINTAR*\n\nNo: ${currentStruk.pembayaran.nomor_kwitansi}\nTanggal: ${currentStruk.pembayaran.tanggal_bayar}\n\nPelanggan: ${currentStruk.pelanggan.nama}\nTotal: Rp ${formatNumber(currentStruk.pembayaran.total)}\n\nTerima kasih`;
+                const waUrl = `https://wa.me/${currentStruk.pelanggan.hp}?text=${encodeURIComponent(msg)}`;
+                window.open(waUrl, '_blank');
+            }
+        }
+        
+        function closeModalStruk() {
+            document.getElementById('modalStruk').classList.remove('active');
+            currentStruk = null;
+        }
+        
+        // ========== SINKRONISASI MANUAL ==========
+        async function syncData() {
+            updateSyncStatus('🔄 Sinkronisasi...');
+            
+            if (!API_URL || API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+                updateSyncStatus('⚠️ API URL belum dikonfigurasi!');
+                alert('Harap konfigurasi API_URL terlebih dahulu!\n\nBuka file index.html dan ganti YOUR_DEPLOYMENT_ID dengan URL Web App Anda.');
+                return;
+            }
+            
+            // Upload semua data ke server
+            const allData = {
+                pelanggan: offlineData.pelanggan,
+                pembayaran: offlineData.pembayaran
+            };
+            
+            try {
+                const result = await callAPI('sync', allData);
+                if (result.status === 'success') {
+                    updateSyncStatus(`✅ Sinkronisasi ${result.synced || 0} data berhasil`);
+                    await loadFromServer(); // Refresh data
+                } else {
+                    updateSyncStatus('❌ Sinkronisasi gagal');
+                }
+            } catch (error) {
+                updateSyncStatus('❌ Error sinkronisasi');
+            }
+        }
+        
+        // ========== UTILITY ==========
+        function showPanel(panelName) {
+            document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(panelName).classList.add('active');
+            
+            const buttons = document.querySelectorAll('.tab-btn');
+            for (let i = 0; i < buttons.length; i++) {
+                if (buttons[i].getAttribute('onclick').includes(panelName)) {
+                    buttons[i].classList.add('active');
+                    break;
+                }
+            }
+            renderAllTables();
+        }
+        
+        function renderAllTables() {
+            renderPelanggan();
+            renderTarif();
+            renderPembayaran();
+            renderLaporan();
+            renderTunggakan();
+            updateStats();
+            updatePelangganSelect();
+        }
+        
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+        
+        function initSampleData() {
+            if (offlineData.pelanggan.length === 0) {
+                offlineData.pelanggan = [
+                    { id: '1', nama: 'Budi Santoso', alamat: 'Jl. Merdeka No. 1', hp: '081234567890', kategori: 'RT', status: 'AKTIF', tanggal_daftar: new Date().toISOString().split('T')[0] },
+                    { id: '2', nama: 'Toko Maju Jaya', alamat: 'Jl. Sudirman No. 5', hp: '081234567891', kategori: 'Toko', status: 'AKTIF', tanggal_daftar: new Date().toISOString().split('T')[0] },
+                    { id: '3', nama: 'PT Sejahtera', alamat: 'Jl. Gatot Subroto No. 10', hp: '081234567892', kategori: 'Kantor', status: 'AKTIF', tanggal_daftar: new Date().toISOString().split('T')[0] }
+                ];
+                
+                offlineData.tarif = [
+                    { id: '1', kategori: 'RT', periode: 'mingguan', nominal: 10000, denda: 5000 },
+                    { id: '2', kategori: 'RT', periode: 'bulanan', nominal: 35000, denda: 10000 },
+                    { id: '3', kategori: 'Toko', periode: 'mingguan', nominal: 20000, denda: 10000 },
+                    { id: '4', kategori: 'Toko', periode: 'bulanan', nominal: 70000, denda: 20000 },
+                    { id: '5', kategori: 'Kantor', periode: 'mingguan', nominal: 25000, denda: 10000 },
+                    { id: '6', kategori: 'Kantor', periode: 'bulanan', nominal: 90000, denda: 25000 }
+                ];
+                
+                saveOfflineData();
+            }
+        }
+        
+        // ========== INIT ==========
+        document.getElementById('tanggalBayar').value = new Date().toISOString().split('T')[0];
+        loadOfflineData();
+        
+        // Auto load from server if API is configured
+        if (API_URL && !API_URL.includes('YOUR_DEPLOYMENT_ID')) {
+            setTimeout(() => {
+                loadFromServer();
+            }, 500);
+        } else {
+            console.warn('⚠️ API URL belum dikonfigurasi. Data hanya disimpan di localStorage.');
+            document.getElementById('syncStatus').innerHTML = '⚠️ API belum siap';
+        }
+    </script>
+</body>
+</html>
