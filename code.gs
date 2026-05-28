@@ -231,14 +231,19 @@ function getPembayaran() {
   for (let i = 1; i < data.length; i++) {
     pembayaran.push({
       id: data[i][0],
-      pelanggan_id: data[i][1],
+      nomor_kwitansi: data[i][1],
       tanggal_bayar: data[i][2],
-      periode_bayar: data[i][3],
-      nominal: data[i][4],
-      denda: data[i][5],
-      total: data[i][6],
-      status: data[i][7],
-      nomor_kwitansi: data[i][8]
+      pelanggan_id: data[i][3],
+      nama_pelanggan: data[i][4],
+      kategori_pelanggan: data[i][5],
+      periode_bayar: data[i][6],
+      nominal: data[i][7],
+      denda: data[i][8],
+      total: data[i][9],
+      status: data[i][10],
+      metode_pembayaran: data[i][11],
+      petugas: data[i][12],
+      catatan: data[i][13]
     });
   }
   return { status: 'success', data: pembayaran };
@@ -262,8 +267,8 @@ function savePembayaran(params) {
   let found = false;
   for (let i = 1; i < ids.length; i++) {
     if (ids[i][0] == data.id) {
-      sheet.getRange(i+1, 1, 1, 9).setValues([[
-        data.id, data.pelanggan_id, data.tanggal_bayar, data.periode_bayar, data.nominal, data.denda, data.total, data.status || 'LUNAS', data.nomor_kwitansi
+      sheet.getRange(i+1, 1, 1, 14).setValues([[
+        data.id, data.nomor_kwitansi, data.tanggal_bayar, data.pelanggan_id, data.nama_pelanggan, data.kategori_pelanggan, data.periode_bayar, data.nominal, data.denda, data.total, data.status || 'LUNAS', data.metode_pembayaran, data.petugas, data.catatan
       ]]);
       found = true;
       break;
@@ -274,15 +279,7 @@ function savePembayaran(params) {
     if (!data.id || data.id === 'null' || data.id === '') data.id = generateId('TRX-');
     if (!data.nomor_kwitansi) data.nomor_kwitansi = generateId('KW-');
     sheet.appendRow([
-      data.id, 
-      data.pelanggan_id, 
-      data.tanggal_bayar, 
-      data.periode_bayar, 
-      data.nominal, 
-      data.denda, 
-      data.total, 
-      data.status || 'LUNAS', 
-      data.nomor_kwitansi
+        data.id, data.nomor_kwitansi, data.tanggal_bayar, data.pelanggan_id, data.nama_pelanggan, data.kategori_pelanggan, data.periode_bayar, data.nominal, data.denda, data.total, data.status || 'LUNAS', data.metode_pembayaran, data.petugas, data.catatan
     ]);
   }
   
@@ -373,13 +370,13 @@ function createTarifSheet(ss) {
 
 function createPembayaranSheet(ss) {
   let sheet = ss.insertSheet('pembayaran');
-  const headers = ['id','pelanggan_id','tanggal_bayar','periode_bayar','nominal','denda','total','status','nomor_kwitansi'];
+  const headers = ['id','nomor_kwitansi','tanggal_bayar','pelanggan_id','nama_pelanggan','kategori_pelanggan','periode_bayar','nominal','denda','total','status','metode_pembayaran','petugas','catatan'];
   sheet.getRange(1,1,1,headers.length).setValues([headers]);
   sheet.setFrozenRows(1);
   sheet.getRange(1,1,1,headers.length).setFontWeight('bold').setBackground('#667eea').setFontColor('#ffffff');
-  sheet.getRange('E:G').setNumberFormat('Rp #,##0');
+  sheet.getRange('H:J').setNumberFormat('Rp #,##0');
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInList(['LUNAS','BELUM LUNAS'], true).build();
-  sheet.getRange('H2:H').setDataValidation(statusRule);
+  sheet.getRange('K2:K').setDataValidation(statusRule);
 }
 
 function createLogAktivitasSheet(ss) {

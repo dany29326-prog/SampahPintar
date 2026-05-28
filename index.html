@@ -417,8 +417,27 @@
                 <input type="number" id="jumlahPeriode" value="1" min="1" onchange="hitungTagihan()">
             </div>
             <div class="form-group">
+                <label>Bulan / Keterangan Tagihan</label>
+                <input type="text" id="keteranganPeriode" placeholder="Cth: Jan - Mar 2026">
+            </div>
+            <div class="form-group">
                 <label>Tanggal Bayar</label>
                 <input type="date" id="tanggalBayar">
+            </div>
+            <div class="form-group">
+                <label>Metode Pembayaran</label>
+                <select id="metodePembayaran">
+                    <option value="Tunai">Tunai</option>
+                    <option value="Transfer">Transfer</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nama Petugas</label>
+                <input type="text" id="petugas" value="Admin">
+            </div>
+            <div class="form-group">
+                <label>Catatan</label>
+                <input type="text" id="catatan" placeholder="Opsional">
             </div>
             <div id="detailTagihan" style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
             <button class="btn-success" onclick="prosesPembayaran()">Proses Pembayaran</button>
@@ -480,7 +499,7 @@
     <script>
         // ========== KONFIGURASI ==========
 // GANTI DENGAN URL WEB APP ANDA!
-const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5YahWnHN6MGa5w0rIvVRPfRD6iADnG0QkPt53k_33ScTJL4T/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzdJkTJR4YWcMCBZZo_tISnLRKv8J7NR-TRFAQnY_p3AXZCzp4cXH4yXFbIYtozrYCc/exec';
         
         let offlineData = {
             pelanggan: [],
@@ -867,14 +886,22 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
             const denda = tarif.denda * jumlah;
             const total = nominal + denda;
             
+            const keteranganPeriode = document.getElementById('keteranganPeriode').value || '';
+            const detailGabungan = `${jumlah} ${periodeType} ${keteranganPeriode ? '(' + keteranganPeriode + ')' : ''}`.trim();
+            
             const pembayaran = {
                 pelanggan_id: pelangganId,
+                nama_pelanggan: pelanggan.nama,
+                kategori_pelanggan: pelanggan.kategori,
                 tanggal_bayar: tanggalBayar,
-                periode_bayar: `${periodeType} - ${jumlah} periode`,
+                periode_bayar: detailGabungan,
                 nominal: nominal,
                 denda: denda,
                 total: total,
-                status: 'LUNAS'
+                status: 'LUNAS',
+                metode_pembayaran: document.getElementById('metodePembayaran').value,
+                petugas: document.getElementById('petugas').value,
+                catatan: document.getElementById('catatan').value
             };
             
             // Simpan ke server
@@ -902,6 +929,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
             showStruk(savedPembayaran, pelanggan, tarif, jumlah);
             
             document.getElementById('jumlahPeriode').value = '1';
+            document.getElementById('keteranganPeriode').value = '';
+            document.getElementById('catatan').value = '';
             document.getElementById('detailTagihan').innerHTML = '';
             updateSyncStatus('✅ Pembayaran tersimpan');
         }
@@ -920,7 +949,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
                 return `
                     <tr>
                         <td>${p.tanggal_bayar}</td>
-                        <td>${pelanggan ? pelanggan.nama : '-'}</td>
+                        <td>${p.nama_pelanggan || pelanggan?.nama || '-'}</td>
                         <td>${p.periode_bayar}</td>
                         <td>Rp ${formatNumber(p.total)}</td>
                         <td>${p.nomor_kwitansi || '-'}</td>
@@ -955,7 +984,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
                 return `
                     <tr>
                         <td>${p.tanggal_bayar}</td>
-                        <td>${pelanggan ? pelanggan.nama : '-'}</td>
+                        <td>${p.nama_pelanggan || pelanggan?.nama || '-'}</td>
                         <td>${p.periode_bayar}</td>
                         <td>Rp ${formatNumber(p.nominal)}</td>
                         <td>Rp ${formatNumber(p.denda)}</td>
@@ -1045,6 +1074,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwAPRhlzSoyJvUFHtFm5Yah
                     <p><strong>Kategori:</strong> ${pelanggan.kategori}</p>
                     <hr>
                     <p><strong>Pembayaran:</strong> ${pembayaran.periode_bayar}</p>
+                    <p><strong>Metode:</strong> ${pembayaran.metode_pembayaran || 'Tunai'}</p>
+                    <p><strong>Petugas:</strong> ${pembayaran.petugas || 'Admin'}</p>
+                    <p><strong>Catatan:</strong> ${pembayaran.catatan || '-'}</p>
                     <p><strong>Subtotal:</strong> Rp ${formatNumber(pembayaran.nominal)}</p>
                     <p><strong>Denda:</strong> Rp ${formatNumber(pembayaran.denda)}</p>
                     <hr>
