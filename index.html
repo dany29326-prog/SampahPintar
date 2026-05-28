@@ -451,17 +451,44 @@
         </div>
 
         <div id="laporan" class="panel">
-            <h2>Laporan Pemasukan</h2>
-            <div class="stats">
-                <div class="stat-card"><h3>Pemasukan Hari Ini</h3><div class="value" id="pemasukanHari">Rp 0</div></div>
-                <div class="stat-card"><h3>Pemasukan Minggu Ini</h3><div class="value" id="pemasukanMinggu">Rp 0</div></div>
-                <div class="stat-card"><h3>Pemasukan Bulan Ini</h3><div class="value" id="pemasukanBulan">Rp 0</div></div>
-                <div class="stat-card"><h3>Total Pemasukan</h3><div class="value" id="pemasukanTotal">Rp 0</div></div>
+            <h2>Dashboard & Laporan</h2>
+            
+            <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Bulan Laporan</label>
+                    <input type="month" id="filterBulan" onchange="renderLaporan(); updateStats();" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Metode Pembayaran</label>
+                    <select id="filterMetode" onchange="renderLaporan(); updateStats();" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                        <option value="Semua">Semua Metode</option>
+                        <option value="Tunai">Tunai</option>
+                        <option value="Transfer">Transfer</option>
+                    </select>
+                </div>
+                <div style="flex: 2; min-width: 200px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: #4a5568;">Cari Pelanggan</label>
+                    <input type="text" id="filterNama" onkeyup="renderLaporan(); updateStats();" placeholder="Ketik nama pelanggan..." style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                </div>
             </div>
+
+            <div class="stats">
+                <div class="stat-card"><h3>Total Pemasukan</h3><div class="value" id="pemasukanTotal">Rp 0</div></div>
+                <div class="stat-card"><h3>Kas Tunai</h3><div class="value" id="pemasukanTunai" style="color: #48bb78;">Rp 0</div></div>
+                <div class="stat-card"><h3>Kas Transfer</h3><div class="value" id="pemasukanTransfer" style="color: #4299e1;">Rp 0</div></div>
+                <div class="stat-card">
+                    <h3>Estimasi Tunggakan</h3>
+                    <div class="value" id="estimasiTunggakanRp" style="color: #e53e3e;">Rp 0</div>
+                    <div id="jumlahMenunggak" style="font-size: 0.9em; color: #718096; margin-top: 5px;">0 Pelanggan</div>
+                </div>
+            </div>
+            
             <div class="table-container">
-                <h3>Detail Transaksi</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0;">Detail Transaksi (Hasil Filter)</h3>
+                </div>
                 <table id="tableLaporan">
-                    <thead><tr><th>Tanggal</th><th>Pelanggan</th><th>Periode</th><th>Nominal</th><th>Denda</th><th>Total</th></tr></thead>
+                    <thead><tr><th>Tanggal</th><th>Pelanggan</th><th>Periode</th><th>Metode</th><th>Petugas</th><th>Total</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -970,24 +997,48 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzdJkTJR4YWcMCBZZo_tISn
         }
         
         // ========== LAPORAN ==========
+        function getFilteredPembayaran() {
+            const filterBulan = document.getElementById('filterBulan') ? document.getElementById('filterBulan').value : '';
+            const filterMetode = document.getElementById('filterMetode') ? document.getElementById('filterMetode').value : 'Semua';
+            const filterNama = document.getElementById('filterNama') ? document.getElementById('filterNama').value.toLowerCase() : '';
+            
+            return offlineData.pembayaran.filter(p => {
+                const pelanggan = offlineData.pelanggan.find(pel => pel.id === p.pelanggan_id);
+                const nama = (p.nama_pelanggan || pelanggan?.nama || '').toLowerCase();
+                
+                let passBulan = true;
+                if (filterBulan) passBulan = p.tanggal_bayar.startsWith(filterBulan);
+                
+                let passMetode = true;
+                if (filterMetode !== 'Semua') passMetode = (p.metode_pembayaran === filterMetode);
+                
+                let passNama = true;
+                if (filterNama) passNama = nama.includes(filterNama);
+                
+                return passBulan && passMetode && passNama;
+            });
+        }
+
         function renderLaporan() {
             const tbody = document.querySelector('#tableLaporan tbody');
             if (!tbody) return;
             
-            if (offlineData.pembayaran.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Belum ada transaksi</td></tr>';
+            const filteredData = getFilteredPembayaran();
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Tidak ada transaksi yang cocok</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = offlineData.pembayaran.map(p => {
+            tbody.innerHTML = filteredData.map(p => {
                 const pelanggan = offlineData.pelanggan.find(pel => pel.id === p.pelanggan_id);
                 return `
                     <tr>
                         <td>${p.tanggal_bayar}</td>
                         <td>${p.nama_pelanggan || pelanggan?.nama || '-'}</td>
                         <td>${p.periode_bayar}</td>
-                        <td>Rp ${formatNumber(p.nominal)}</td>
-                        <td>Rp ${formatNumber(p.denda)}</td>
+                        <td>${p.metode_pembayaran || 'Tunai'}</td>
+                        <td>${p.petugas || '-'}</td>
                         <td>Rp ${formatNumber(p.total)}</td>
                     </tr>
                 `;
@@ -995,31 +1046,65 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzdJkTJR4YWcMCBZZo_tISn
         }
         
         function updateStats() {
-            const today = new Date().toISOString().split('T')[0];
-            const now = new Date();
-            const weekStart = new Date(now);
-            weekStart.setDate(now.getDate() - now.getDay());
-            const weekStartStr = weekStart.toISOString().split('T')[0];
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const filteredData = getFilteredPembayaran();
             
-            let totalHari = 0, totalMinggu = 0, totalBulan = 0, totalSemua = 0;
+            let totalPemasukan = 0;
+            let kasTunai = 0;
+            let kasTransfer = 0;
             
-            offlineData.pembayaran.forEach(p => {
-                totalSemua += p.total;
-                if (p.tanggal_bayar === today) totalHari += p.total;
-                if (p.tanggal_bayar >= weekStartStr) totalMinggu += p.total;
-                if (p.tanggal_bayar >= monthStart) totalBulan += p.total;
+            filteredData.forEach(p => {
+                totalPemasukan += p.total;
+                if (p.metode_pembayaran === 'Transfer') {
+                    kasTransfer += p.total;
+                } else {
+                    kasTunai += p.total;
+                }
             });
             
-            const pemasukanHari = document.getElementById('pemasukanHari');
-            const pemasukanMinggu = document.getElementById('pemasukanMinggu');
-            const pemasukanBulan = document.getElementById('pemasukanBulan');
-            const pemasukanTotal = document.getElementById('pemasukanTotal');
+            // Hitung Tunggakan
+            let totalTunggakanRp = 0;
+            let jumlahPenunggak = 0;
+            const today = new Date();
+            const activePelanggan = offlineData.pelanggan.filter(p => p.status === 'AKTIF');
             
-            if (pemasukanHari) pemasukanHari.innerHTML = `Rp ${formatNumber(totalHari)}`;
-            if (pemasukanMinggu) pemasukanMinggu.innerHTML = `Rp ${formatNumber(totalMinggu)}`;
-            if (pemasukanBulan) pemasukanBulan.innerHTML = `Rp ${formatNumber(totalBulan)}`;
-            if (pemasukanTotal) pemasukanTotal.innerHTML = `Rp ${formatNumber(totalSemua)}`;
+            activePelanggan.forEach(pelanggan => {
+                const lastPayment = offlineData.pembayaran
+                    .filter(p => p.pelanggan_id === pelanggan.id)
+                    .sort((a,b) => new Date(b.tanggal_bayar) - new Date(a.tanggal_bayar))[0];
+                
+                const refDate = lastPayment ? new Date(lastPayment.tanggal_bayar) : (pelanggan.tanggal_daftar ? new Date(pelanggan.tanggal_daftar) : new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000)));
+                
+                const diffTime = Math.abs(today - refDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays >= 30) {
+                    jumlahPenunggak++;
+                    
+                    let periodeType = 'bulanan';
+                    if (lastPayment && lastPayment.periode_bayar && lastPayment.periode_bayar.toLowerCase().includes('mingguan')) {
+                        periodeType = 'mingguan';
+                    }
+                    
+                    const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
+                    if (tarif) {
+                        let missedPeriods = periodeType === 'bulanan' ? Math.floor(diffDays / 30) : Math.floor(diffDays / 7);
+                        if (missedPeriods < 1) missedPeriods = 1;
+                        totalTunggakanRp += (tarif.nominal * missedPeriods);
+                    }
+                }
+            });
+            
+            const elTotal = document.getElementById('pemasukanTotal');
+            const elTunai = document.getElementById('pemasukanTunai');
+            const elTransfer = document.getElementById('pemasukanTransfer');
+            const elTunggakan = document.getElementById('estimasiTunggakanRp');
+            const elMenunggak = document.getElementById('jumlahMenunggak');
+            
+            if (elTotal) elTotal.innerHTML = `Rp ${formatNumber(totalPemasukan)}`;
+            if (elTunai) elTunai.innerHTML = `Rp ${formatNumber(kasTunai)}`;
+            if (elTransfer) elTransfer.innerHTML = `Rp ${formatNumber(kasTransfer)}`;
+            if (elTunggakan) elTunggakan.innerHTML = `Rp ${formatNumber(totalTunggakanRp)}`;
+            if (elMenunggak) elMenunggak.innerHTML = `${jumlahPenunggak} Pelanggan`;
         }
         
         // ========== TUNGGAKAN ==========
