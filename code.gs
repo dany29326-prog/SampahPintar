@@ -253,10 +253,10 @@ function savePembayaran(params) {
   if (typeof data === 'string') data = JSON.parse(data);
   
   if (!data.id || data.id === 'null' || data.id === '') {
-    data.id = Utilities.getUuid();
+    data.id = generateId('TRX-');
   }
   if (!data.nomor_kwitansi) {
-    data.nomor_kwitansi = `KW-${new Date().getTime()}`;
+    data.nomor_kwitansi = generateId('KW-');
   }
   const ids = sheet.getRange('A:A').getValues();
   let found = false;
