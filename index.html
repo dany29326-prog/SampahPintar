@@ -402,6 +402,7 @@
             <h2>Transaksi Pembayaran</h2>
             <div class="form-group">
                 <label>Pilih Pelanggan</label>
+                <input type="text" id="cariPelangganSelect" onkeyup="updatePelangganSelect()" placeholder="Ketik nama untuk mencari..." style="margin-bottom: 8px;">
                 <select id="pilihPelanggan" onchange="hitungTagihan()">
                     <option value="">Pilih Pelanggan</option>
                 </select>
@@ -861,11 +862,27 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzdJkTJR4YWcMCBZZo_tISn
         // ========== TRANSAKSI ==========
         function updatePelangganSelect() {
             const select = document.getElementById('pilihPelanggan');
+            const searchInput = document.getElementById('cariPelangganSelect');
             if (!select) return;
             
-            const activePelanggan = offlineData.pelanggan.filter(p => p.status === 'AKTIF');
+            const keyword = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            const activePelanggan = offlineData.pelanggan.filter(p => {
+                const matches = p.nama.toLowerCase().includes(keyword) || p.id.toLowerCase().includes(keyword);
+                return p.status === 'AKTIF' && matches;
+            });
+            
+            const currentVal = select.value;
+            
             select.innerHTML = '<option value="">Pilih Pelanggan</option>' + 
                 activePelanggan.map(p => `<option value="${p.id}">${p.nama} - ${p.kategori}</option>`).join('');
+                
+            if (currentVal && activePelanggan.find(p => p.id === currentVal)) {
+                select.value = currentVal;
+            } else if (activePelanggan.length === 1 && keyword.length > 0) {
+                select.value = activePelanggan[0].id;
+                hitungTagihan();
+            }
         }
         
         function hitungTagihan() {
