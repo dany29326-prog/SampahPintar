@@ -336,9 +336,9 @@
                     <label>Kategori</label>
                     <select id="kategori" required>
                         <option value="">Pilih Kategori</option>
-                        <option value="RT">RT (Rumah Tangga)</option>
-                        <option value="Toko">Toko</option>
-                        <option value="Kantor">Kantor</option>
+                        <option value="RT">RT</option>
+                        <option value="RESTO">RESTO</option>
+                        <option value="KANTOR">KANTOR</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -367,9 +367,9 @@
                     <label>Kategori</label>
                     <select id="tarif_kategori" required>
                         <option value="">Pilih Kategori</option>
-                        <option value="RT">RT (Rumah Tangga)</option>
-                        <option value="Toko">Toko</option>
-                        <option value="Kantor">Kantor</option>
+                        <option value="RT">RT</option>
+                        <option value="RESTO">RESTO</option>
+                        <option value="KANTOR">KANTOR</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1050,7 +1050,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
 
         function renderCharts(filteredData) {
             const incomeByDate = {};
-            const incomeByKategori = { 'RT': 0, 'Toko': 0, 'Kantor': 0, 'Lainnya': 0 };
+            const incomeByKategori = { 'RT': 0, 'RESTO': 0, 'KANTOR': 0, 'Lainnya': 0 };
 
             filteredData.forEach(p => {
                 const totalVal = Number(p.total) || 0;
