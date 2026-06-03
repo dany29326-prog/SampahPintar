@@ -403,24 +403,17 @@
             <div class="form-group">
                 <label>Pilih Pelanggan</label>
                 <input type="text" id="cariPelangganSelect" onkeyup="updatePelangganSelect()" placeholder="Ketik nama untuk mencari..." style="margin-bottom: 8px;">
-                <select id="pilihPelanggan" onchange="hitungTagihan()">
+                <select id="pilihPelanggan" onchange="autoIsiKategori()">
                     <option value="">Pilih Pelanggan</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Periode Pembayaran</label>
-                <select id="periodeBayar" onchange="hitungTagihan()">
-                    <option value="mingguan">Mingguan</option>
-                    <option value="bulanan">Bulanan</option>
-                </select>
+                <label>Kategori</label>
+                <input type="text" id="kategoriPelanggan" readonly style="background-color: #e2e8f0; cursor: not-allowed;">
             </div>
             <div class="form-group">
-                <label>Jumlah Periode</label>
-                <input type="number" id="jumlahPeriode" value="1" min="1" onchange="hitungTagihan()">
-            </div>
-            <div class="form-group">
-                <label>Bulan / Keterangan Tagihan</label>
-                <input type="text" id="keteranganPeriode" placeholder="Cth: Jan - Mar 2026">
+                <label>Tagihan bulan</label>
+                <input type="text" id="tagihanBulan" placeholder="Cth: Jan - Mar 2026">
             </div>
             <div class="form-group">
                 <label>Tanggal Bayar</label>
@@ -434,6 +427,10 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>Nominal (Rp)</label>
+                <input type="number" id="nominalPembayaran" placeholder="Contoh: 35000">
+            </div>
+            <div class="form-group">
                 <label>Nama Petugas</label>
                 <input type="text" id="petugas" value="Admin">
             </div>
@@ -441,7 +438,6 @@
                 <label>Catatan</label>
                 <input type="text" id="catatan" placeholder="Opsional">
             </div>
-            <div id="detailTagihan" style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;"></div>
             <button class="btn-success" onclick="prosesPembayaran()">Proses Pembayaran</button>
             <div class="table-container">
                 <h3>Riwayat Pembayaran</h3>
@@ -881,41 +877,24 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
                 select.value = currentVal;
             } else if (activePelanggan.length === 1 && keyword.length > 0) {
                 select.value = activePelanggan[0].id;
-                hitungTagihan();
+                autoIsiKategori();
             }
         }
         
-        function hitungTagihan() {
+        function autoIsiKategori() {
             const pelangganId = document.getElementById('pilihPelanggan').value;
-            const detailDiv = document.getElementById('detailTagihan');
+            const katInput = document.getElementById('kategoriPelanggan');
+            if (!katInput) return;
             
-            if (!pelangganId || !detailDiv) return;
-            
-            const pelanggan = offlineData.pelanggan.find(p => p.id === pelangganId);
-            if (!pelanggan) return;
-            
-            const periodeType = document.getElementById('periodeBayar').value;
-            const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
-            
-            if (!tarif) {
-                detailDiv.innerHTML = '<p style="color:red">Tarif belum di-set untuk kategori ini</p>';
+            if (!pelangganId) {
+                katInput.value = '';
                 return;
             }
             
-            const jumlah = parseInt(document.getElementById('jumlahPeriode').value) || 1;
-            const nominal = tarif.nominal * jumlah;
-            const denda = tarif.denda * jumlah;
-            const total = nominal + denda;
-            
-            detailDiv.innerHTML = `
-                <strong>Detail Tagihan:</strong><br>
-                Kategori: ${pelanggan.kategori}<br>
-                Tarif per periode: Rp ${formatNumber(tarif.nominal)}<br>
-                Jumlah periode: ${jumlah}<br>
-                Subtotal: Rp ${formatNumber(nominal)}<br>
-                Denda: Rp ${formatNumber(denda)}<br>
-                <strong style="font-size: 1.2em;">Total: Rp ${formatNumber(total)}</strong>
-            `;
+            const pelanggan = offlineData.pelanggan.find(p => p.id === pelangganId);
+            if (pelanggan) {
+                katInput.value = pelanggan.kategori;
+            }
         }
         
         async function prosesPembayaran() {
@@ -928,32 +907,25 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
             const pelanggan = offlineData.pelanggan.find(p => p.id === pelangganId);
             if (!pelanggan) return;
             
-            const periodeType = document.getElementById('periodeBayar').value;
-            const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
+            const tagihanBulan = document.getElementById('tagihanBulan').value || '-';
+            const tanggalBayar = document.getElementById('tanggalBayar').value || new Date().toISOString().split('T')[0];
+            const nominalInput = document.getElementById('nominalPembayaran').value;
             
-            if (!tarif) {
-                alert('Tarif belum di-set');
+            if (!nominalInput) {
+                alert('Masukkan nominal pembayaran');
                 return;
             }
-            
-            const jumlah = parseInt(document.getElementById('jumlahPeriode').value) || 1;
-            const tanggalBayar = document.getElementById('tanggalBayar').value || new Date().toISOString().split('T')[0];
-            const nominal = tarif.nominal * jumlah;
-            const denda = tarif.denda * jumlah;
-            const total = nominal + denda;
-            
-            const keteranganPeriode = document.getElementById('keteranganPeriode').value || '';
-            const detailGabungan = `${jumlah} ${periodeType} ${keteranganPeriode ? '(' + keteranganPeriode + ')' : ''}`.trim();
+            const nominal = parseInt(nominalInput);
             
             const pembayaran = {
                 pelanggan_id: pelangganId,
                 nama_pelanggan: pelanggan.nama,
                 kategori_pelanggan: pelanggan.kategori,
                 tanggal_bayar: tanggalBayar,
-                periode_bayar: detailGabungan,
+                periode_bayar: tagihanBulan,
                 nominal: nominal,
-                denda: denda,
-                total: total,
+                denda: 0,
+                total: nominal,
                 status: 'LUNAS',
                 metode_pembayaran: document.getElementById('metodePembayaran').value,
                 petugas: document.getElementById('petugas').value,
@@ -982,12 +954,11 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
             renderTunggakan();
             updateStats();
             
-            showStruk(savedPembayaran, pelanggan, tarif, jumlah);
+            showStruk(savedPembayaran, pelanggan, null, 1);
             
-            document.getElementById('jumlahPeriode').value = '1';
-            document.getElementById('keteranganPeriode').value = '';
+            document.getElementById('tagihanBulan').value = '';
+            document.getElementById('nominalPembayaran').value = '';
             document.getElementById('catatan').value = '';
-            document.getElementById('detailTagihan').innerHTML = '';
             updateSyncStatus('✅ Pembayaran tersimpan');
         }
         
@@ -1234,7 +1205,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
                     <td>${p.hp}</td>
                     <td>${p.kategori}</td>
                     <td><span style="color: orange">TUNGGAK</span></td>
-                    <td><button onclick="showPanel('transaksi'); setTimeout(() => { document.getElementById('pilihPelanggan').value = '${p.id}'; hitungTagihan(); }, 100);">Bayar</button></td>
+                    <td><button onclick="showPanel('transaksi'); setTimeout(() => { document.getElementById('pilihPelanggan').value = '${p.id}'; autoIsiKategori(); }, 100);">Bayar</button></td>
                 </tr>
             `).join('');
         }
