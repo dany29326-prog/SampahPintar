@@ -1,7 +1,7 @@
 // ========== KONFIGURASI ==========
 // GANTI DENGAN ID GOOGLE SHEET KAKAK!
 // (ID bisa didapat dari link URL Google Sheet. Contoh: https://docs.google.com/spreadsheets/d/INI_ADALAH_ID_NYA/edit)
-const SPREADSHEET_ID = 'GANTI_DENGAN_ID_SHEET_KAKAK_DI_SINI';
+const SPREADSHEET_ID = '1-Bts-jz_cXByhNLMcI_GACAgB3-DwBwTdFAUG0C1zBQ';
 
 // ========== FUNGSI WEB APP (API) ==========
 function doGet(e) {
