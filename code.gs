@@ -276,7 +276,7 @@ function createPelangganSheet(ss) {
   sheet.setColumnWidths(4, 150); sheet.setColumnWidths(5, 100); sheet.setColumnWidths(6, 100); sheet.setColumnWidths(7, 150);
   
   // Data validation
-  const kategoriRule = SpreadsheetApp.newDataValidation().requireValueInList(['RT','Toko','Kantor'], true).build();
+  const kategoriRule = SpreadsheetApp.newDataValidation().requireValueInList(['RT','RESTO','KANTOR'], true).build();
   sheet.getRange('E2:E').setDataValidation(kategoriRule);
   const statusRule = SpreadsheetApp.newDataValidation().requireValueInList(['AKTIF','NONAKTIF'], true).build();
   sheet.getRange('F2:F').setDataValidation(statusRule);
