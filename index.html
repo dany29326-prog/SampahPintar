@@ -1107,7 +1107,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyqtPiFfON1vxiSlKUmQjRd
         
         function sendWA() {
             if (currentStruk) {
-                const msg = `*KWITANSI PEMBAYARAN SAMPAHPINTAR*\n\nNo: ${currentStruk.pembayaran.nomor_kwitansi}\nTanggal: ${currentStruk.pembayaran.tanggal_bayar}\n\nPelanggan: ${currentStruk.pelanggan.nama}\nTotal: Rp ${formatNumber(currentStruk.pembayaran.total)}\n\nTerima kasih`;
+                const p = currentStruk.pelanggan;
+                const trx = currentStruk.pembayaran;
+                const garis = "----------------------------------------";
+                const msg = `*KWITANSI PEMBAYARAN SAMPAH*\n*AL FURQON PEDULI*\n${garis}\nNo. Kwitansi: ${trx.nomor_kwitansi}\nTanggal: ${trx.tanggal_bayar}\n${garis}\nPelanggan: ${p.nama}\nAlamat: ${p.alamat}\nKategori: ${p.kategori}\n${garis}\nPembayaran: ${trx.periode_bayar}\nMetode: ${trx.metode_pembayaran}\nPetugas: ${trx.petugas}\nCatatan: ${trx.catatan || '-'}\nSubtotal: Rp ${formatNumber(trx.nominal)}\nDenda: Rp ${formatNumber(trx.denda)}\n${garis}\n*TOTAL: Rp ${formatNumber(trx.total)}*\n${garis}\nTerima kasih atas pembayarannya\n*** LUNAS ***`;
                 
                 let phone = currentStruk.pelanggan.hp.toString().replace(/\D/g, '');
                 if (phone.startsWith('0')) {
