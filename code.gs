@@ -48,9 +48,6 @@ function handleAction(params) {
       case 'getPelanggan': return getPelanggan();
       case 'savePelanggan': return savePelanggan(params);
       case 'deletePelanggan': return deletePelanggan(params);
-      case 'getTarif': return getTarif();
-      case 'saveTarif': return saveTarif(params);
-      case 'deleteTarif': return deleteTarif(params);
       case 'getPembayaran': return getPembayaran();
       case 'savePembayaran': return savePembayaran(params);
       case 'sync': return syncData(params);
@@ -66,8 +63,6 @@ function ensureSheetsExist() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName('pelanggan');
   if (!sheet) createPelangganSheet(ss);
-  sheet = ss.getSheetByName('tarif');
-  if (!sheet) createTarifSheet(ss);
   sheet = ss.getSheetByName('pembayaran');
   if (!sheet) createPembayaranSheet(ss);
   sheet = ss.getSheetByName('log_aktivitas');
@@ -152,73 +147,6 @@ function deletePelanggan(params) {
   return { status: 'success' };
 }
 
-// ========== TARIF CRUD ==========
-function getTarif() {
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName('tarif');
-  if (!sheet) return { status: 'error', message: 'Sheet tarif tidak ditemukan' };
-  
-  const data = sheet.getDataRange().getValues();
-  const tarif = [];
-  for (let i = 1; i < data.length; i++) {
-    tarif.push({
-      id: data[i][0],
-      kategori: data[i][1],
-      periode: data[i][2],
-      nominal: data[i][3],
-      denda: data[i][4]
-    });
-  }
-  return { status: 'success', data: tarif };
-}
-
-function saveTarif(params) {
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName('tarif');
-  if (!sheet) return { status: 'error', message: 'Sheet tarif tidak ditemukan' };
-  
-  let data = params.data;
-  if (typeof data === 'string') data = JSON.parse(data);
-  
-  if (data.id && data.id !== 'null' && data.id !== '') {
-    const ids = sheet.getRange('A:A').getValues();
-    let found = false;
-    for (let i = 1; i < ids.length; i++) {
-      if (ids[i][0] == data.id) {
-        sheet.getRange(i+1, 1, 1, 5).setValues([[
-          data.id, data.kategori, data.periode, data.nominal, data.denda
-        ]]);
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      sheet.appendRow([data.id, data.kategori, data.periode, data.nominal, data.denda]);
-    }
-  } else {
-    data.id = generateId('TRF-');
-    sheet.appendRow([data.id, data.kategori, data.periode, data.nominal, data.denda]);
-  }
-  logActivity('save_tarif', `Menyimpan tarif: ${data.kategori} - ${data.periode}`);
-  return { status: 'success', data: data };
-}
-
-function deleteTarif(params) {
-  const ss = getSpreadsheet();
-  const sheet = ss.getSheetByName('tarif');
-  if (!sheet) return { status: 'error', message: 'Sheet tidak ditemukan' };
-  
-  const id = params.id;
-  const ids = sheet.getRange('A:A').getValues();
-  for (let i = 1; i < ids.length; i++) {
-    if (ids[i][0] == id) {
-      sheet.deleteRow(i+1);
-      logActivity('delete_tarif', `Menghapus tarif ID: ${id}`);
-      break;
-    }
-  }
-  return { status: 'success' };
-}
 
 // ========== PEMBAYARAN CRUD ==========
 function getPembayaran() {
@@ -352,21 +280,6 @@ function createPelangganSheet(ss) {
   sheet.getRange('F2:F').setDataValidation(statusRule);
 }
 
-function createTarifSheet(ss) {
-  let sheet = ss.insertSheet('tarif');
-  const headers = ['id','kategori','periode','nominal','denda'];
-  sheet.getRange(1,1,1,headers.length).setValues([headers]);
-  sheet.setFrozenRows(1);
-  sheet.getRange(1,1,1,headers.length).setFontWeight('bold').setBackground('#667eea').setFontColor('#ffffff');
-  sheet.setColumnWidths(1, 150); sheet.setColumnWidths(2, 120); sheet.setColumnWidths(3, 120);
-  sheet.setColumnWidths(4, 150); sheet.setColumnWidths(5, 150);
-  sheet.getRange('D:E').setNumberFormat('Rp #,##0');
-  
-  const kategoriRule = SpreadsheetApp.newDataValidation().requireValueInList(['RT','Toko','Kantor'], true).build();
-  sheet.getRange('B2:B').setDataValidation(kategoriRule);
-  const periodeRule = SpreadsheetApp.newDataValidation().requireValueInList(['mingguan','bulanan'], true).build();
-  sheet.getRange('C2:C').setDataValidation(periodeRule);
-}
 
 function createPembayaranSheet(ss) {
   let sheet = ss.insertSheet('pembayaran');
@@ -410,10 +323,9 @@ function onOpen() {
 
 function setupCompleteSystem() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheets = ['pelanggan','tarif','pembayaran','log_aktivitas','settings'];
+  const sheets = ['pelanggan','pembayaran','log_aktivitas','settings'];
   sheets.forEach(name => { const s = ss.getSheetByName(name); if(s) ss.deleteSheet(s); });
   createPelangganSheet(ss);
-  createTarifSheet(ss);
   createPembayaranSheet(ss);
   createLogAktivitasSheet(ss);
   createSettingsSheet(ss);
@@ -425,7 +337,7 @@ function resetAllData() {
   const response = ui.alert('⚠️ Peringatan', 'Hapus semua data?', ui.ButtonSet.YES_NO);
   if (response === ui.Button.YES) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    ['pelanggan','tarif','pembayaran','log_aktivitas'].forEach(name => {
+    ['pelanggan','pembayaran','log_aktivitas'].forEach(name => {
       const sheet = ss.getSheetByName(name);
       if(sheet && sheet.getLastRow()>1) sheet.deleteRows(2, sheet.getLastRow()-1);
     });
