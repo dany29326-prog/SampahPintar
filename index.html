@@ -299,6 +299,14 @@
             .tab-btn { padding: 8px 16px; font-size: 0.85em; }
             th, td { font-size: 0.85em; }
         }
+
+        @media print {
+            body * { visibility: hidden; }
+            #modalStruk, #modalStruk * { visibility: visible; }
+            #modalStruk { position: absolute; left: 0; top: 0; background: white; width: 100%; margin: 0; padding: 0; display: flex; justify-content: center; align-items: flex-start; }
+            .modal-content { box-shadow: none; width: 100%; max-width: 100%; padding: 0; }
+            #modalStruk button { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -392,6 +400,10 @@
                 <input type="number" id="nominalPembayaran" placeholder="Contoh: 35000">
             </div>
             <div class="form-group">
+                <label>Denda (Rp) - Opsional</label>
+                <input type="number" id="dendaPembayaran" placeholder="Contoh: 5000" value="0">
+            </div>
+            <div class="form-group">
                 <label>Nama Petugas</label>
                 <input type="text" id="petugas" value="Admin">
             </div>
@@ -399,7 +411,7 @@
                 <label>Catatan</label>
                 <input type="text" id="catatan" placeholder="Opsional">
             </div>
-            <button class="btn-success" onclick="prosesPembayaran()">Proses Pembayaran</button>
+            <button id="btnProsesPembayaran" class="btn-success" onclick="prosesPembayaran()">Proses Pembayaran</button>
             <div class="table-container">
                 <h3>Riwayat Pembayaran</h3>
                 <table id="tablePembayaran">
@@ -766,6 +778,15 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyhC8_EOPG4VTRNZPQPVC1w
         }
         
         async function prosesPembayaran() {
+            const btnProses = document.getElementById('btnProsesPembayaran');
+            
+            const resetBtn = () => {
+                if (btnProses) {
+                    btnProses.disabled = false;
+                    btnProses.innerHTML = 'Proses Pembayaran';
+                }
+            };
+
             const pelangganId = document.getElementById('pilihPelanggan').value;
             if (!pelangganId) {
                 alert('Pilih pelanggan terlebih dahulu');
@@ -775,15 +796,23 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyhC8_EOPG4VTRNZPQPVC1w
             const pelanggan = offlineData.pelanggan.find(p => p.id === pelangganId);
             if (!pelanggan) return;
             
-            const tagihanBulan = document.getElementById('tagihanBulan').value || '-';
-            const tanggalBayar = document.getElementById('tanggalBayar').value || new Date().toISOString().split('T')[0];
             const nominalInput = document.getElementById('nominalPembayaran').value;
-            
             if (!nominalInput) {
                 alert('Masukkan nominal pembayaran');
                 return;
             }
-            const nominal = parseInt(nominalInput);
+
+            if (btnProses) {
+                btnProses.disabled = true;
+                btnProses.innerHTML = 'Menyimpan... <div class="loading" style="width:12px;height:12px;border-width:2px;margin-left:5px;"></div>';
+            }
+            
+            const tagihanBulan = document.getElementById('tagihanBulan').value || '-';
+            const tanggalBayar = document.getElementById('tanggalBayar').value || new Date().toISOString().split('T')[0];
+            const nominal = parseInt(nominalInput) || 0;
+            const dendaInput = document.getElementById('dendaPembayaran').value;
+            const denda = parseInt(dendaInput) || 0;
+            const total = nominal + denda;
             
             const pembayaran = {
                 pelanggan_id: pelangganId,
@@ -792,8 +821,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyhC8_EOPG4VTRNZPQPVC1w
                 tanggal_bayar: tanggalBayar,
                 periode_bayar: tagihanBulan,
                 nominal: nominal,
-                denda: 0,
-                total: nominal,
+                denda: denda,
+                total: total,
                 status: 'LUNAS',
                 metode_pembayaran: document.getElementById('metodePembayaran').value,
                 petugas: document.getElementById('petugas').value,
@@ -826,8 +855,11 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyhC8_EOPG4VTRNZPQPVC1w
             
             document.getElementById('tagihanBulan').value = '';
             document.getElementById('nominalPembayaran').value = '';
+            document.getElementById('dendaPembayaran').value = '0';
             document.getElementById('catatan').value = '';
             updateSyncStatus('✅ Pembayaran tersimpan');
+            
+            resetBtn();
         }
         
         function renderPembayaran() {
@@ -839,7 +871,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyhC8_EOPG4VTRNZPQPVC1w
                 return;
             }
             
-            tbody.innerHTML = offlineData.pembayaran.map(p => {
+            const riwayatTerbaru = offlineData.pembayaran.slice().reverse().slice(0, 100);
+            
+            tbody.innerHTML = riwayatTerbaru.map(p => {
                 const pelanggan = offlineData.pelanggan.find(pel => pel.id === p.pelanggan_id);
                 return `
                     <tr>
@@ -1097,13 +1131,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyhC8_EOPG4VTRNZPQPVC1w
         }
         
         function printStruk() {
-            const printContent = document.getElementById('strukContent');
-            if (!printContent) return;
-            const originalContent = document.body.innerHTML;
-            document.body.innerHTML = printContent.innerHTML;
             window.print();
-            document.body.innerHTML = originalContent;
-            location.reload();
         }
         
         function sendWA() {
