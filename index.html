@@ -1108,7 +1108,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyqtPiFfON1vxiSlKUmQjRd
         function sendWA() {
             if (currentStruk) {
                 const msg = `*KWITANSI PEMBAYARAN SAMPAHPINTAR*\n\nNo: ${currentStruk.pembayaran.nomor_kwitansi}\nTanggal: ${currentStruk.pembayaran.tanggal_bayar}\n\nPelanggan: ${currentStruk.pelanggan.nama}\nTotal: Rp ${formatNumber(currentStruk.pembayaran.total)}\n\nTerima kasih`;
-                const waUrl = `https://wa.me/${currentStruk.pelanggan.hp}?text=${encodeURIComponent(msg)}`;
+                
+                let phone = currentStruk.pelanggan.hp.toString().replace(/\D/g, '');
+                if (phone.startsWith('0')) {
+                    phone = '62' + phone.substring(1);
+                }
+                
+                const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
                 window.open(waUrl, '_blank');
             }
         }
