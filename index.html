@@ -478,10 +478,11 @@
     <div id="modalStruk" class="modal">
         <div class="modal-content">
             <div id="strukContent"></div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center;">
                 <button onclick="printStruk()">🖨️ Print</button>
-                <button onclick="sendWA()">📱 Kirim WA</button>
-                <button onclick="closeModalStruk()">Tutup</button>
+                <button onclick="sendWA()" class="btn-success">📱 Kirim WA</button>
+                <button onclick="printAndWA()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">🖨️ + 📱 Keduanya</button>
+                <button onclick="closeModalStruk()" class="btn-danger">Tutup</button>
             </div>
         </div>
     </div>
@@ -1122,6 +1123,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyqtPiFfON1vxiSlKUmQjRd
                 const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
                 window.open(waUrl, '_blank');
             }
+        }
+        
+        function printAndWA() {
+            sendWA();
+            setTimeout(() => {
+                printStruk();
+            }, 500);
         }
         
         function closeModalStruk() {
