@@ -310,7 +310,6 @@
 
         <div class="tabs">
             <button class="tab-btn active" onclick="showPanel('pelanggan')">👥 Pelanggan</button>
-            <button class="tab-btn" onclick="showPanel('tarif')">💰 Tarif</button>
             <button class="tab-btn" onclick="showPanel('transaksi')">💳 Transaksi</button>
             <button class="tab-btn" onclick="showPanel('laporan')">📊 Laporan</button>
             <button class="tab-btn" onclick="showPanel('tunggakan')">⚠️ Tunggakan</button>
@@ -359,44 +358,6 @@
             </div>
         </div>
 
-        <div id="tarif" class="panel">
-            <h2>Setting Tarif</h2>
-            <form id="formTarif" onsubmit="saveTarif(event)">
-                <input type="hidden" id="tarif_id">
-                <div class="form-group">
-                    <label>Kategori</label>
-                    <select id="tarif_kategori" required>
-                        <option value="">Pilih Kategori</option>
-                        <option value="RT">RT</option>
-                        <option value="RESTO">RESTO</option>
-                        <option value="KANTOR">KANTOR</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Periode</label>
-                    <select id="periode" required>
-                        <option value="mingguan">Mingguan</option>
-                        <option value="bulanan">Bulanan</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nominal (Rp)</label>
-                    <input type="number" id="nominal" required>
-                </div>
-                <div class="form-group">
-                    <label>Denda (Rp)</label>
-                    <input type="number" id="denda" value="0">
-                </div>
-                <button type="submit">Simpan Tarif</button>
-                <button type="button" class="btn-danger" onclick="resetFormTarif()">Batal</button>
-            </form>
-            <div class="table-container">
-                <table id="tableTarif">
-                    <thead><tr><th>Kategori</th><th>Periode</th><th>Nominal</th><th>Denda</th><th>Aksi</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
 
         <div id="transaksi" class="panel">
             <h2>Transaksi Pembayaran</h2>
@@ -475,9 +436,9 @@
                 <div class="stat-card"><h3>Kas Tunai</h3><div class="value" id="pemasukanTunai" style="color: #48bb78;">Rp 0</div></div>
                 <div class="stat-card"><h3>Kas Transfer</h3><div class="value" id="pemasukanTransfer" style="color: #4299e1;">Rp 0</div></div>
                 <div class="stat-card">
-                    <h3>Estimasi Tunggakan</h3>
-                    <div class="value" id="estimasiTunggakanRp" style="color: #e53e3e;">Rp 0</div>
-                    <div id="jumlahMenunggak" style="font-size: 0.9em; color: #718096; margin-top: 5px;">0 Pelanggan</div>
+                    <h3>Pelanggan Menunggak</h3>
+                    <div class="value" id="jumlahMenunggak" style="color: #e53e3e;">0</div>
+                    <div style="font-size: 0.9em; color: #718096; margin-top: 5px;">Orang</div>
                 </div>
             </div>
             
@@ -539,7 +500,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
         
         let offlineData = {
             pelanggan: [],
-            tarif: [],
             pembayaran: []
         };
         
@@ -577,7 +537,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
             try {
                 let action = '';
                 if (type === 'pelanggan') action = 'savePelanggan';
-                else if (type === 'tarif') action = 'saveTarif';
                 else if (type === 'pembayaran') action = 'savePembayaran';
                 else return false;
                 
@@ -608,12 +567,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
                     offlineData.pelanggan = pelangganResult.data;
                 }
                 
-                // Load tarif
-                const tarifResult = await callAPI('getTarif');
-                if (tarifResult.status === 'success' && tarifResult.data) {
-                    offlineData.tarif = tarifResult.data;
-                }
-                
+
                 // Load pembayaran
                 const pembayaranResult = await callAPI('getPembayaran');
                 if (pembayaranResult.status === 'success' && pembayaranResult.data) {
@@ -766,94 +720,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
             `).join('');
         }
         
-        // ========== TARIF CRUD ==========
-        async function saveTarif(event) {
-            event.preventDefault();
-            
-            const id = document.getElementById('tarif_id').value;
-            const tarif = {
-                id: id || null,
-                kategori: document.getElementById('tarif_kategori').value,
-                periode: document.getElementById('periode').value,
-                nominal: parseInt(document.getElementById('nominal').value),
-                denda: parseInt(document.getElementById('denda').value) || 0
-            };
-            
-            const serverResult = await syncToServer('tarif', tarif);
-            
-            if (serverResult || !API_URL.includes('YOUR_DEPLOYMENT_ID')) {
-                if (id) {
-                    const index = offlineData.tarif.findIndex(t => t.id === id);
-                    if (index !== -1) {
-                        offlineData.tarif[index] = serverResult?.data || tarif;
-                    }
-                } else {
-                    offlineData.tarif.push(serverResult?.data || { ...tarif, id: generateId('TRF-') });
-                }
-                
-                saveOfflineData();
-                renderTarif();
-                resetFormTarif();
-                updateSyncStatus('✅ Tarif tersimpan');
-            } else {
-                alert('Gagal menyimpan tarif ke server');
-            }
-        }
-        
-        function editTarif(id) {
-            const tarif = offlineData.tarif.find(t => t.id === id);
-            if (tarif) {
-                document.getElementById('tarif_id').value = tarif.id;
-                document.getElementById('tarif_kategori').value = tarif.kategori;
-                document.getElementById('periode').value = tarif.periode;
-                document.getElementById('nominal').value = tarif.nominal;
-                document.getElementById('denda').value = tarif.denda;
-            }
-        }
-        
-        async function deleteTarif(id) {
-            if (confirm('Hapus tarif ini?')) {
-                if (API_URL && !API_URL.includes('YOUR_DEPLOYMENT_ID')) {
-                    await callAPI('deleteTarif', { id: id });
-                }
-                
-                offlineData.tarif = offlineData.tarif.filter(t => t.id !== id);
-                saveOfflineData();
-                renderTarif();
-                updateSyncStatus('✅ Tarif dihapus');
-            }
-        }
-        
-        function resetFormTarif() {
-            document.getElementById('tarif_id').value = '';
-            document.getElementById('tarif_kategori').value = '';
-            document.getElementById('periode').value = 'mingguan';
-            document.getElementById('nominal').value = '';
-            document.getElementById('denda').value = '0';
-        }
-        
-        function renderTarif() {
-            const tbody = document.querySelector('#tableTarif tbody');
-            if (!tbody) return;
-            
-            if (offlineData.tarif.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Belum ada data tarif</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = offlineData.tarif.map(t => `
-                <tr>
-                    <td>${t.kategori}</td>
-                    <td>${t.periode}</td>
-                    <td>Rp ${formatNumber(t.nominal)}</td>
-                    <td>Rp ${formatNumber(t.denda)}</td>
-                    <td class="action-buttons">
-                        <button onclick="editTarif('${t.id}')">✏️</button>
-                        <button class="btn-danger" onclick="deleteTarif('${t.id}')">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+
         
         // ========== TRANSAKSI ==========
         function updatePelangganSelect() {
@@ -990,9 +857,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
             const pembayaran = offlineData.pembayaran.find(p => p.id === id);
             if (pembayaran) {
                 const pelanggan = offlineData.pelanggan.find(p => p.id === pembayaran.pelanggan_id);
-                const periodeType = pembayaran.periode_bayar.split(' ')[0];
-                const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
-                showStruk(pembayaran, pelanggan, tarif, 1);
+                showStruk(pembayaran, pelanggan, null, 1);
             }
         }
         
@@ -1131,7 +996,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
             });
             
             // Hitung Tunggakan
-            let totalTunggakanRp = 0;
             let jumlahPenunggak = 0;
             const today = new Date();
             const activePelanggan = offlineData.pelanggan.filter(p => p.status === 'AKTIF');
@@ -1148,32 +1012,18 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
                 
                 if (diffDays >= 30) {
                     jumlahPenunggak++;
-                    
-                    let periodeType = 'bulanan';
-                    if (lastPayment && lastPayment.periode_bayar && lastPayment.periode_bayar.toLowerCase().includes('mingguan')) {
-                        periodeType = 'mingguan';
-                    }
-                    
-                    const tarif = offlineData.tarif.find(t => t.kategori === pelanggan.kategori && t.periode === periodeType);
-                    if (tarif) {
-                        let missedPeriods = periodeType === 'bulanan' ? Math.floor(diffDays / 30) : Math.floor(diffDays / 7);
-                        if (missedPeriods < 1) missedPeriods = 1;
-                        totalTunggakanRp += (tarif.nominal * missedPeriods);
-                    }
                 }
             });
             
             const elTotal = document.getElementById('pemasukanTotal');
             const elTunai = document.getElementById('pemasukanTunai');
             const elTransfer = document.getElementById('pemasukanTransfer');
-            const elTunggakan = document.getElementById('estimasiTunggakanRp');
             const elMenunggak = document.getElementById('jumlahMenunggak');
             
             if (elTotal) elTotal.innerHTML = `Rp ${formatNumber(totalPemasukan)}`;
             if (elTunai) elTunai.innerHTML = `Rp ${formatNumber(kasTunai)}`;
             if (elTransfer) elTransfer.innerHTML = `Rp ${formatNumber(kasTransfer)}`;
-            if (elTunggakan) elTunggakan.innerHTML = `Rp ${formatNumber(totalTunggakanRp)}`;
-            if (elMenunggak) elMenunggak.innerHTML = `${jumlahPenunggak} Pelanggan`;
+            if (elMenunggak) elMenunggak.innerHTML = `${jumlahPenunggak}`;
         }
         
         // ========== TUNGGAKAN ==========
@@ -1213,8 +1063,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
         // ========== STRUK ==========
         let currentStruk = null;
         
-        function showStruk(pembayaran, pelanggan, tarif, jumlah) {
-            currentStruk = { pembayaran, pelanggan, tarif, jumlah };
+        function showStruk(pembayaran, pelanggan) {
+            currentStruk = { pembayaran, pelanggan };
             const strukHtml = `
                 <div class="struk">
                     <h3>KWITANSI PEMBAYARAN</h3>
@@ -1315,7 +1165,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
         
         function renderAllTables() {
             renderPelanggan();
-            renderTarif();
             renderPembayaran();
             renderLaporan();
             renderTunggakan();
@@ -1354,15 +1203,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbw5IraHqcrcrCBN29OHtUVi
                     { id: '1', nama: 'Budi Santoso', alamat: 'Jl. Merdeka No. 1', hp: '081234567890', kategori: 'RT', status: 'AKTIF', tanggal_daftar: new Date().toISOString().split('T')[0] },
                     { id: '2', nama: 'Toko Maju Jaya', alamat: 'Jl. Sudirman No. 5', hp: '081234567891', kategori: 'Toko', status: 'AKTIF', tanggal_daftar: new Date().toISOString().split('T')[0] },
                     { id: '3', nama: 'PT Sejahtera', alamat: 'Jl. Gatot Subroto No. 10', hp: '081234567892', kategori: 'Kantor', status: 'AKTIF', tanggal_daftar: new Date().toISOString().split('T')[0] }
-                ];
-                
-                offlineData.tarif = [
-                    { id: '1', kategori: 'RT', periode: 'mingguan', nominal: 10000, denda: 5000 },
-                    { id: '2', kategori: 'RT', periode: 'bulanan', nominal: 35000, denda: 10000 },
-                    { id: '3', kategori: 'Toko', periode: 'mingguan', nominal: 20000, denda: 10000 },
-                    { id: '4', kategori: 'Toko', periode: 'bulanan', nominal: 70000, denda: 20000 },
-                    { id: '5', kategori: 'Kantor', periode: 'mingguan', nominal: 25000, denda: 10000 },
-                    { id: '6', kategori: 'Kantor', periode: 'bulanan', nominal: 90000, denda: 25000 }
                 ];
                 
                 saveOfflineData();
