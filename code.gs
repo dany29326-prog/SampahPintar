@@ -1,5 +1,7 @@
 // ========== KONFIGURASI ==========
-const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
+// GANTI DENGAN ID GOOGLE SHEET KAKAK!
+// (ID bisa didapat dari link URL Google Sheet. Contoh: https://docs.google.com/spreadsheets/d/INI_ADALAH_ID_NYA/edit)
+const SPREADSHEET_ID = 'GANTI_DENGAN_ID_SHEET_KAKAK_DI_SINI';
 
 // ========== FUNGSI WEB APP (API) ==========
 function doGet(e) {
@@ -313,6 +315,8 @@ function createSettingsSheet(ss) {
 }
 
 // ========== FUNGSI MANUAL UNTUK MENJALANKAN SETUP ==========
+// Fungsi onOpen ini dimatikan karena pada Standalone Script tidak ada UI Spreadsheet secara langsung.
+/*
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   const menu = ui.createMenu('📊 SampahPintar');
@@ -320,27 +324,24 @@ function onOpen() {
   menu.addItem('🗑️ Reset Semua Data', 'resetAllData');
   menu.addToUi();
 }
+*/
 
 function setupCompleteSystem() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheets = ['pelanggan','pembayaran','log_aktivitas','settings'];
   sheets.forEach(name => { const s = ss.getSheetByName(name); if(s) ss.deleteSheet(s); });
   createPelangganSheet(ss);
   createPembayaranSheet(ss);
   createLogAktivitasSheet(ss);
   createSettingsSheet(ss);
-  SpreadsheetApp.getUi().alert('✅ Setup Selesai! Semua sheet telah dibuat.');
+  console.log('✅ Setup Selesai! Semua sheet telah dibuat.');
 }
 
 function resetAllData() {
-  const ui = SpreadsheetApp.getUi();
-  const response = ui.alert('⚠️ Peringatan', 'Hapus semua data?', ui.ButtonSet.YES_NO);
-  if (response === ui.Button.YES) {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    ['pelanggan','pembayaran','log_aktivitas'].forEach(name => {
-      const sheet = ss.getSheetByName(name);
-      if(sheet && sheet.getLastRow()>1) sheet.deleteRows(2, sheet.getLastRow()-1);
-    });
-    ui.alert('✅ Data direset');
-  }
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  ['pelanggan','pembayaran','log_aktivitas'].forEach(name => {
+    const sheet = ss.getSheetByName(name);
+    if(sheet && sheet.getLastRow()>1) sheet.deleteRows(2, sheet.getLastRow()-1);
+  });
+  console.log('✅ Data direset');
 }
