@@ -345,3 +345,26 @@ function resetAllData() {
   });
   console.log('✅ Data direset');
 }
+
+// ========== FUNGSI BACKUP (DIPANGGIL OLEH TRIGGER/PEMICU) ==========
+function createBackup() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const originalName = ss.getName();
+    
+    // Format tanggal untuk nama file backup, contoh: "SampahPintar Backup 2026-06-05"
+    const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+    const backupName = originalName + " Backup " + dateStr;
+    
+    // Dapatkan file aslinya
+    const file = DriveApp.getFileById(SPREADSHEET_ID);
+    
+    // Dapatkan folder tempat file asli berada, lalu buat salinannya di folder yang sama
+    const folder = file.getParents().next();
+    file.makeCopy(backupName, folder);
+    
+    logActivity('backup_otomatis', `Sukses membuat backup: ${backupName}`);
+  } catch (error) {
+    logActivity('error_backup', `Gagal backup: ${error.toString()}`);
+  }
+}
