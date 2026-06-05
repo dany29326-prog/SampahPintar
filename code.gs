@@ -252,7 +252,8 @@ function logActivity(aksi, detail) {
       sheet = ss.insertSheet('log_aktivitas');
       sheet.getRange(1,1,1,5).setValues([['timestamp','aksi','detail','user','jenis']]);
     }
-    sheet.appendRow([new Date().toISOString(), aksi, detail, Session.getActiveUser().getEmail(), 'web']);
+    const waktuLebihRapi = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd MMM yyyy HH:mm:ss");
+    sheet.appendRow([waktuLebihRapi, aksi, detail, Session.getActiveUser().getEmail(), 'web']);
   } catch(e) {}
 }
 
